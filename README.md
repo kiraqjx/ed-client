@@ -1,7 +1,17 @@
 # ed-client
 etcd discovery client lib.
 
+# Introduce
+
+1. After the etcd service breaks down and restarts, you can restore the connection status and re-register the service.
+2. Distributed locks are used to ensure that no data loss occurs during service discovery when services are started.
+
 # Usage guide
+
+## download
+```shell
+go get github.com/kiraqjx/ed-client
+```
 
 ## registrant
 ```go
