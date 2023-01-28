@@ -49,13 +49,11 @@ func Test_Discovery(t *testing.T) {
 	key := "/test-discovery/test/1"
 	cli.Put(context.Background(), key, string(valueJson), clientv3.WithLease(resp.ID))
 
-OUT:
-	for {
-		if len(watcher.Nodes) > 0 {
-			watchData := watcher.Nodes[key]
-			assert.Equal(t, *watchData, *testNodeInfo)
-			break OUT
-		}
+	value := <-watcher.ChangeEvent()
+	assert.Equal(t, true, value)
+	if len(watcher.Nodes) > 0 {
+		watchData := watcher.Nodes[key]
+		assert.Equal(t, *watchData, *testNodeInfo)
 	}
 }
 
