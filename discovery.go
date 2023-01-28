@@ -13,18 +13,20 @@ import (
 )
 
 type Watcher struct {
-	prefix     string
-	serverName string
-	Nodes      map[string]*NodeInfo
-	client     *clientv3.Client
+	prefix      string
+	serverName  string
+	Nodes       map[string]*NodeInfo
+	client      *clientv3.Client
+	changeEvent chan bool
 }
 
 func NewWatcher(client *clientv3.Client, prefix string, serverName string) *Watcher {
 	return &Watcher{
-		prefix:     prefix,
-		serverName: serverName,
-		Nodes:      make(map[string]*NodeInfo),
-		client:     client,
+		prefix:      prefix,
+		serverName:  serverName,
+		Nodes:       make(map[string]*NodeInfo),
+		client:      client,
+		changeEvent: make(chan bool),
 	}
 }
 
@@ -78,14 +80,20 @@ func (w *Watcher) Start(ctx context.Context) error {
 					switch events.Type {
 					case clientv3.EventTypePut:
 						w.addNode(events.Kv)
+						w.changeEvent <- true
 					case clientv3.EventTypeDelete:
 						delete(w.Nodes, string(events.Kv.Key))
+						w.changeEvent <- true
 					}
 				}
 			}
 		}
 	}()
 	return nil
+}
+
+func (w *Watcher) ChangeEvent() chan bool {
+	return w.changeEvent
 }
 
 func (w *Watcher) addNode(kv *mvccpb.KeyValue) {

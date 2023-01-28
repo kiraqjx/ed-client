@@ -3,6 +3,7 @@ package edclient
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"testing"
 	"time"
 
@@ -48,13 +49,11 @@ func Test_Discovery(t *testing.T) {
 	key := "/test-discovery/test/1"
 	cli.Put(context.Background(), key, string(valueJson), clientv3.WithLease(resp.ID))
 
-OUT:
-	for {
-		if len(watcher.Nodes) > 0 {
-			watchData := watcher.Nodes[key]
-			assert.Equal(t, *watchData, *testNodeInfo)
-			break OUT
-		}
+	value := <-watcher.ChangeEvent()
+	assert.Equal(t, true, value)
+	if len(watcher.Nodes) > 0 {
+		watchData := watcher.Nodes[key]
+		assert.Equal(t, *watchData, *testNodeInfo)
 	}
 }
 
@@ -102,4 +101,54 @@ OUT:
 			break
 		}
 	}
+}
+
+func Test_Lb(t *testing.T) {
+	nodes := []*NodeInfo{
+		{
+			Server: "127.0.0.1:8081",
+		},
+		{
+			Server: "127.0.0.1:8082",
+		},
+		{
+			Server: "127.0.0.1:8083",
+		},
+	}
+
+	lb := NewLb(nodes)
+	lbMap := make(map[string]*NodeInfo)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	var lock sync.Mutex
+
+	go func() {
+		node1 := lb.Lb()
+		lock.Lock()
+		lbMap[node1.Server] = node1
+		lock.Unlock()
+		wg.Done()
+	}()
+
+	go func() {
+		node2 := lb.Lb()
+		lock.Lock()
+		lbMap[node2.Server] = node2
+		lock.Unlock()
+		wg.Done()
+	}()
+
+	go func() {
+		node3 := lb.Lb()
+		lock.Lock()
+		lbMap[node3.Server] = node3
+		lock.Unlock()
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	assert.Equal(t, len(lbMap), 3)
 }

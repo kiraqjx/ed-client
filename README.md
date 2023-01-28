@@ -5,6 +5,7 @@ etcd discovery client lib.
 
 1. After the etcd service breaks down and restarts, you can restore the connection status and re-register the service.
 2. Distributed locks are used to ensure that no data loss occurs during service discovery when services are started.
+3. Support Simple LB. (Concurrency security)
 
 # Usage guide
 
@@ -89,4 +90,31 @@ func main() {
 	cancel()
 }
 
+```
+
+## lb
+```go
+package edclient
+
+import (
+	edclient "github.com/kiraqjx/ed-client"
+)
+
+func main () {
+	nodes := []*edclient.NodeInfo{
+		{
+			Server: "127.0.0.1:8081",
+		},
+		{
+			Server: "127.0.0.1:8082",
+		},
+		{
+			Server: "127.0.0.1:8083",
+		},
+	}
+
+	lb := edclient.NewLb(nodes)
+
+	node := lb.Lb()
+}
 ```
