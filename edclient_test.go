@@ -152,3 +152,52 @@ func Test_Lb(t *testing.T) {
 
 	assert.Equal(t, len(lbMap), 3)
 }
+
+func Test_Lb_Map(t *testing.T) {
+	nodes := make(map[string]*NodeInfo)
+	nodes["1"] = &NodeInfo{
+		Server: "127.0.0.1:8081",
+	}
+	nodes["2"] = &NodeInfo{
+		Server: "127.0.0.1:8082",
+	}
+	nodes["3"] = &NodeInfo{
+		Server: "127.0.0.1:8083",
+	}
+
+	lb := NewLbFromMap(nodes)
+	lbMap := make(map[string]*NodeInfo)
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	var lock sync.Mutex
+
+	go func() {
+		node1 := lb.Lb()
+		lock.Lock()
+		lbMap[node1.Server] = node1
+		lock.Unlock()
+		wg.Done()
+	}()
+
+	go func() {
+		node2 := lb.Lb()
+		lock.Lock()
+		lbMap[node2.Server] = node2
+		lock.Unlock()
+		wg.Done()
+	}()
+
+	go func() {
+		node3 := lb.Lb()
+		lock.Lock()
+		lbMap[node3.Server] = node3
+		lock.Unlock()
+		wg.Done()
+	}()
+
+	wg.Wait()
+
+	assert.Equal(t, len(lbMap), 3)
+}
