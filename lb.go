@@ -17,7 +17,7 @@ func NewLb(nodes []*NodeInfo) *Lb {
 }
 
 func NewLbFromMap(nodesMap map[string]*NodeInfo) *Lb {
-	nodes := make([]*NodeInfo, len(nodesMap))
+	nodes := make([]*NodeInfo, 0, len(nodesMap))
 	for _, v := range nodesMap {
 		nodes = append(nodes, v)
 	}
