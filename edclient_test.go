@@ -84,22 +84,21 @@ func Test_Registrant(t *testing.T) {
 		t.Error(err)
 	}
 
-OUT:
-	for {
-		if len(watcher.Nodes) > 0 {
-			for _, value := range watcher.Nodes {
-				assert.Equal(t, *value, *nodeInfo)
-			}
-			break OUT
+	<-watcher.ChangeEvent()
+
+	if len(watcher.Nodes) > 0 {
+		for _, value := range watcher.Nodes {
+			assert.Equal(t, *value, *nodeInfo)
 		}
+	} else {
+		t.Error()
 	}
 
 	registrant.Quit()
 
-	for {
-		if len(watcher.Nodes) == 0 {
-			break
-		}
+	<-watcher.ChangeEvent()
+	if len(watcher.Nodes) != 0 {
+		t.Error()
 	}
 }
 
